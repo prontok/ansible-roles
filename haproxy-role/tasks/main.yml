@@ -1,0 +1,23 @@
+---
+- import_tasks: add_repos_yum_CentOS7.yml
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_distribution_major_version == "7"
+
+- import_tasks: add_repos_yum_CentOS8.yml
+  when:
+    - ansible_distribution == "CentOS"
+    - ansible_distribution_major_version == "8"
+
+- import_tasks: add_repos_apt_Debian11.yml
+  when:
+    - ansible_distribution == "Debian"
+    - ansible_distribution_release == "bullseye"
+
+- import_tasks: install_haproxy.yml
+
+- import_tasks: generate_pass.yml
+
+- import_tasks: haproxy_tcp_configure.yml
+  when:
+    - haproxy_protocol_method == "tcp"

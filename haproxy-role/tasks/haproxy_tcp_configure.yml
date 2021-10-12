@@ -1,0 +1,48 @@
+---
+- name: "настройка Haproxy по протоколу TCP"
+  template:
+    src: haproxy.cfg_tcp.j2
+    dest: /etc/haproxy/haproxy.cfg
+  notify: haproxy_restart
+
+- name: "create a directory haproxy ssl"
+  file:
+    path: "{{ sslDir_admin }}"
+    state: directory
+    mode: '0750'
+
+- name: "install python3-cryptography"
+  apt:
+    name: python3-cryptography
+    state: present
+    update_cache: no
+  when:
+    - ansible_distribution == "Debian" or ansible_distribution == "Ubuntu"
+
+- name: "generate a Self Signed OpenSSL certificate for admin panel"
+  community.crypto.openssl_privatekey:
+    path: "{{ sslDir_admin }}/{{ ansible_hostname }}.key"
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: "generate (csr) for admin panel"
+  openssl_csr:
+    path: "{{ sslDir_admin }}/{{ ansible_hostname }}.csr"
+    privatekey_path: "{{ sslDir_admin }}/{{ ansible_hostname }}.key"
+    common_name: "{{ ansible_hostname }}"
+    country_name: "{{ country_name }}"
+    email_address: "{{ email_address }}"
+    organization_name: "{{ organization_name }}"
+
+- name: "create certificate for admin panel"
+  openssl_certificate:
+    path: "{{ sslDir_admin }}/{{ ansible_hostname }}.crt"
+    privatekey_path: "{{ sslDir_admin }}/{{ ansible_hostname }}.key"
+    csr_path: "{{ sslDir_admin }}/{{ ansible_hostname }}.csr"
+    provider: selfsigned
+
+- name: "create (pem) certificate"
+  shell: | #
+    cat {{ sslDir_admin }}/{{ ansible_hostname }}.crt {{ sslDir_admin }}/{{ ansible_hostname }}.key | tee {{ sslDir_admin }}/{{ ansible_hostname }}.pem
+  changed_when: no

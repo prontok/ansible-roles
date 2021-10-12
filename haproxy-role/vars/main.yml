@@ -1,0 +1,31 @@
+---
+# Репозитории
+EL7: "https://repofiles.repo.corp.tander.ru/repofiles/yum/CentOS7"
+EL8: "https://repofiles.repo.corp.tander.ru/repofiles/yum/CentOS8"
+
+# Отключение SSL для apt
+system_ssl_dir: /etc/apt/apt.conf.d/trusted-apt
+
+########################################################################################
+###########################  НАСТРОКА ПАРАМЕТРОВ HAPROXY  ##############################
+########################################################################################
+
+# Настройки генерации самободписного SSL сертификата
+sslDir_admin: /etc/pki/haproxy
+country_name: RU
+email_address: unix_admin@magnit.ru
+organization_name: AO Tander
+
+# Выбрать протокол работы (tcp, https)
+haproxy_protocol_method: tcp
+
+# Указать метод балансировки (source, roundrobin)
+haproxy_balance_method: roundrobin
+
+# Описываются сервера бакендов
+haproxy_backend_proxy_port: 9090
+haproxy_backend_servers:
+- name: app1
+  address: 127.0.0.1
+- name: app2
+  address: 127.0.0.2

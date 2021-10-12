@@ -1,0 +1,63 @@
+global
+    maxconn 100000
+    ulimit-n        65536
+    log 127.0.0.1 local0 #notice
+    quiet
+#    stats socket /var/run/haproxy.sock user root group zabbix mode 0660 level admin
+    tune.ssl.default-dh-param 2048
+    nbproc 1
+
+userlist stats-auth
+    group admin users admin
+    user  admin insecure-password {{ random_admin_pass }}
+    group readonly users stats
+    user  stats insecure-password {{ random_user_pass }}
+
+defaults
+    log               global
+    mode              tcp
+    option            tcplog
+    option            dontlognull
+    option            abortonclose
+    option            splice-auto
+    retries           3
+    option            redispatch
+    timeout client    300s
+    timeout connect   300s
+    timeout server    300s
+    timeout check     100s
+
+frontend stats_FE
+    mode http
+    maxconn 100
+    default_backend stats
+    bind *:10000 ssl crt {{ sslDir_admin }}/{{ ansible_hostname }}.pem
+
+backend stats
+    mode http
+    acl AUTH       http_auth(stats-auth)
+    acl AUTH_ADMIN http_auth_group(stats-auth) admin
+    stats enable
+    stats uri     /
+    stats refresh 5s
+    stats show-legends
+    stats show-node
+    stats http-request auth unless AUTH
+    stats admin if AUTH_ADMIN
+
+frontend fr_80
+    bind *:80
+    mode http
+    redirect scheme https if !{ ssl_fc }
+
+frontend fr_443
+    bind *:443
+    maxconn 100000
+    use_backend web_bk
+
+backend web_bk
+    balance {{ haproxy_balance_method }}
+    default-server maxconn 60000
+{% for backend in haproxy_backend_servers %}
+    server {{ backend.name }} {{ backend.address }}:{{ haproxy_backend_proxy_port }} check
+{% endfor %}
