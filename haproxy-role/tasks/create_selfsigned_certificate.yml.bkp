@@ -1,0 +1,23 @@
+---
+- name: "generate private key for admin panel"
+  openssl_privatekey:
+    path: "{{ sslDir_admin }}/{{ ansible_hostname }}.key"
+
+- name: "generate (csr) for admin panel"
+  openssl_csr:
+    path: "{{ sslDir_admin }}/{{ haproxy_admin }}.csr"
+    privatekey_path: "{{ sslDir_admin }}/{{ haproxy_admin }}.key"
+    common_name: "{{ ansible_hostname }}"
+    country_name: "{{ country_name }}"
+    email_address: "{{ email_address }}"
+    organization_name: "{{ organization_name }}"
+
+- name: "create certificate for admin panel"
+  openssl_certificate:
+    path: "{{ sslDir_admin }}/{{ haproxy_admin }}.crt"
+    privatekey_path: "{{ sslDir_admin }}/{{ haproxy_admin }}.key"
+    csr_path: "{{ sslDir_admin }}/{{ haproxy_admin }}.csr"
+    provider: selfsigned
+
+- name: create (pem) certificate
+  shell: cat {{ sslDir_admin }}/{{ haproxy_admin }}.crt {{ sslDir_admin }}/{{ haproxy_admin }}.key | tee {{ sslDir_admin }}/{{ haproxy_admin }}.pem
