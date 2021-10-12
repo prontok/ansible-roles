@@ -1,0 +1,30 @@
+---
+- name: "Анализ текущих репозиториев в ОС"
+  find:
+    paths: /etc/yum.repos.d
+    file_type: file
+    excludes:
+      - "CentOS-Base.repo"
+      - "CentOS-CR.repo"
+      - "CentOS-Media.repo"
+      - "epel.repo"
+      - "redhat.repo"
+  register: found_files
+
+- name: "Очистка текущих репозиториев в ОС"
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items:
+    - "{{ found_files['files'] }}"
+
+- name: "Добавляем репозитории {{ ansible_distribution }} EL8"
+  get_url:
+    url: "{{ EL8 }}/{{ item }}"
+    dest: "/etc/yum.repos.d/{{ item }}"
+    validate_certs: no
+  loop:
+    - CentOS-Base.repo
+    - CentOS-CR.repo
+    - CentOS-Media.repo
+    - epel.repo

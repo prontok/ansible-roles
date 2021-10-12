@@ -1,0 +1,20 @@
+---
+- name: "Добавляем репозитории Debian {{ ansible_distribution_release }}"
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+    filename: bullseye-main
+    validate_certs: no
+    update_cache: no
+  loop:
+    - deb [arch=amd64] https://repo.corp.tander.ru/repository/bullseye-ftp bullseye main
+    - deb-src [arch=amd64] https://repo.corp.tander.ru/repository/bullseye-ftp bullseye main
+    - deb [arch=amd64] https://repo.corp.tander.ru/repository/bullseye-security bullseye-security/updates main
+    - deb-src [arch=amd64] https://repo.corp.tander.ru/repository/bullseye-security bullseye-security/updates main
+    - deb [arch=amd64] https://repo.corp.tander.ru/repository/bullseye-ftp bullseye-updates main
+    - deb-src [arch=amd64] https://repo.corp.tander.ru/repository/bullseye-ftp bullseye-updates main
+
+- name: "Включаем игнорирования SSL сертификатов"
+  template:
+    src: trusted-apt.j2
+    dest: "{{ system_ssl_dir }}"
